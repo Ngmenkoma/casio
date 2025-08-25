@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>OCEAN VIEW Hostel — Offline Booking (Admin)</title>
+<style>
+  :root{--accent:#0066cc;--blue:#033a6b;--card-bg:#ffffffcc}
+  body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f5f7fb;color:#062436}
+  .container{max-width:1100px;margin:0 auto;padding:18px}
+  header{background:linear-gradient(90deg,#002b55,#004b7a);color:white;padding:14px}
+  header .nav{display:flex;gap:12px;align-items:center;justify-content:space-between}
+  header a{color:rgb(231, 230, 230);text-decoration:none;font-weight:600}
+  .hero{background:linear-gradient(180deg, rgba(0,56,102,0.8), rgba(0,56,102,0.45));color:rgb(7, 1, 1);padding:20px;border-radius:8px}
+  .grid{display:grid;grid-template-columns:1fr 420px;gap:18px;margin-top:18px}
+  .card{background:var(--card-bg);border-radius:10px;padding:14px;box-shadow:0 8px 20px rgba(0,0,0,0.06)}
+  label{display:block;margin-top:10px;font-weight:700}
+  input,select{width:100%;padding:9px;border-radius:6px;border:1px solid #cfd8e3;margin-top:6px;box-sizing:border-box}
+  button{background:var(--accent);color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:700;margin-top:12px}
+  button.secondary{background:#e6eef8;color:var(--blue);border:1px solid rgba(3,56,102,0.06)}
+  .small{font-size:0.9rem;color:#334e68}
+  .muted{color:#567185}
+  .info{background:#f5fbff;border-left:4px solid rgba(3,56,102,0.06);padding:10px;border-radius:6px;margin-top:12px}
+  .hidden{display:none}
+  .rooms-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .room-pill{padding:7px 10px;border-radius:8px;border:1px solid rgba(3,56,102,0.08);background:white;cursor:pointer}
+  .room-pill.full{opacity:0.5;background:#fff0f0;cursor:not-allowed;border-color:#ffb3b3;text-decoration:line-through}
+  .room-pill.selected{background:var(--accent);color:white;border-color:var(--accent)}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{padding:8px;border-bottom:1px solid #edf3f7;text-align:left}
+  img.proof{max-width:160px;border-radius:6px;border:1px solid #ddd;margin-top:6px;display:block}
+  footer{margin-top:18px;text-align:center;color:#6b7f90;padding-bottom:20px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}.container{padding:12px}}
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    line-height: 1.6;
+    background-image: url('Hostel.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .form-message {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+  }
+  .success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  .error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="container nav">
+    <div>
+      <h2 style="margin:0">OCEAN VIEW HOSTEL</h2>
+      <div class="small">Offline booking — admin issues access codes</div>
+    </div>
+    <div>
+      <a href="#booking">Booking</a>
+      <a href="#howto" style="margin-left:12px">How to Pay</a>
+      <a href="#" id="adminLink" style="margin-left:12px">Admin</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero card">
+    <h3 style="margin:0">24 rooms • Prices by room capacity</h3>
+    <p class="small" style="margin:6px 0 0">4-person ₵3200 • 3-person ₵4200 • 2-person ₵5200 • 1-person ₵6200</p>
+  </section>
+
+  <div class="grid">
+    <!-- Left: booking & selection -->
+    <div>
+      <div class="card" id="howto">
+        <h4 style="margin:0 0 8px">How to Pay</h4>
+        <ol class="muted small">
+          <li>Send MoMo to <strong>053 691 6900</strong> (School Hostel).</li>
+          <li>Reference: <strong>Your Full Name + Room Type</strong>.</li>
+          <li>Keep transaction ID & screenshot.</li>
+          <li>Submit booking form (attach screenshot).</li>
+          <li>Wait for admin approval — admin will email your access code.</li>
+        </ol>
+      </div>
+
+      <div class="card" id="booking">
+        <h4 style="margin:0 0 8px">Booking Form</h4>
+        <div id="bookingMessage" class="info hidden"></div>
+        
+        <!-- Formspree Form -->
+        <form id="bookingForm" action="https://formspree.io/f/xgvzqvbv" method="POST" enctype="multipart/form-data">
+          <label>Full name</label>
+          <input type="text" name="name" id="name" placeholder="John Mensah" required>
+
+          <label>Email</label>
+          <input type="email" name="email" id="email" placeholder="student@example.com" required>
+
+          <label>Room type</label>
+          <select name="room_type" id="type" required>
+            <option value="">-- choose --</option>
+            <option value="4">4-person — ₵3200</option>
+            <option value="3">3-person — ₵4200</option>
+            <option value="2">2-person — ₵5200</option>
+            <option value="1">1-person — ₵6200</option>
+          </select>
+
+          <div id="priceBox" class="small muted hidden"></div>
+
+          <label>Check-in</label>
+          <input type="date" name="checkin" id="checkin">
+
+          <label>Student ID</label>
+          <input type="digit" name="Student ID" id="Student ID">
+
+          <label>Transaction ID</label>
+          <input type="text" name="transaction_id" id="tx" placeholder="e.g., MTN12345" required>
+
+          <label>Upload proof (screenshot)</label>
+          <input type="file" name="payment_proof" id="proof" accept="image/*" required>
+
+          <div id="form-message" class="form-message"></div>
+          
+          <div style="display:flex;gap:10px">
+            <button type="submit" id="btnSubmitBooking">Submit Booking</button>
+            <button type="button" id="btnResetBooking" class="secondary">Reset</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h4 style="margin:0 0 8px">Enter Access Code</h4>
+        <div class="small muted">After admin emails you the code, enter it here to choose a room.</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="accessCodeInput" placeholder="e.g. OV1234">
+          <button id="btnCheckCode">Check Code</button>
+        </div>
+        <div id="codeMessage" class="info hidden"></div>
+
+        <div id="roomSelectionArea" class="hidden" style="margin-top:12px">
+          <label>Select available room for your approved type</label>
+          <div id="roomsList" class="rooms-grid"></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button id="btnChooseRoom" disabled>Choose Room & Finalize</button>
+            <button id="btnCancelChoose" class="secondary">Cancel</button>
+          </div>
+          <div id="finalMessage" class="info hidden" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: status & admin -->
+    <aside>
+      <div class="card">
+        <h4 style="margin:0 0 8px">Status</h4>
+        <div class="small">Total rooms: <strong>24</strong></div>
+        <div class="small">Available now: <strong id="availableCount">24</strong></div>
+        <div style="margin-top:12px">
+          <button id="btnPreviewRooms" class="secondary">Preview Rooms</button>
+        </div>
+        <div id="roomsPreview" class="rooms-grid" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h4 style="margin:0 0 8px">Admin Panel (private)</h4>
+        <div class="small">Click Admin in top-right and enter password to manage bookings.</div>
+        <div id="adminPanel" class="hidden"></div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>© 2025 OCEAN VIEW Hostel — Offline Demo</footer>
+  <footer>
+    CONTACT
+    0536916900
+    casiodavi9@gmail.com
+  </footer>
+</main>
+
+<script>
+/* -------------- Configuration -------------- */
+const ADMIN_PASSWORD = 'Ocean123';            // admin password
+const STORAGE = { ROOMS: 'ov_rooms_v3', BOOKINGS: 'ov_bookings_v3' };
+
+/* -------------- Initial rooms (1-24) -------------- */
+function initialRooms(){
+  return [
+    {number:1, type:4, price:3200, occupants:0},
+    {number:2, type:4, price:3200, occupants:0},
+    {number:3, type:4, price:3200, occupants:0},
+    {number:4, type:4, price:3200, occupants:0},
+    {number:5, type:4, price:3200, occupants:0},
+    {number:6, type:3, price:4200, occupants:0},
+    {number:7, type:3, price:4200, occupants:0},
+    {number:8, type:3, price:4200, occupants:0},
+    {number:9, type:3, price:4200, occupants:0},
+    {number:10,type:3, price:4200, occupants:0},
+    {number:11,type:2, price:5200, occupants:0},
+    {number:12,type:2, price:5200, occupants:0},
+    {number:13,type:2, price:5200, occupants:0},
+    {number:14,type:2, price:5200, occupants:0},
+    {number:15,type:2, price:5200, occupants:0},
+    {number:16,type:1, price:6200, occupants:0},
+    {number:17,type:1, price:6200, occupants:0},
+    {number:18,type:1, price:6200, occupants:0},
+    {number:19,type:1, price:6200, occupants:0},
+    {number:20,type:1, price:6200, occupants:0},
+    {number:21,type:1, price:6200, occupants:0},
+    {number:22,type:1, price:6200, occupants:0},
+    {number:23,type:1, price:6200, occupants:0},
+    {number:24,type:1, price:6200, occupants:0}
+  ];
+}
+
+/* -------------- Storage helpers -------------- */
+function loadRooms(){ const r = localStorage.getItem(STORAGE.ROOMS); if(r) return JSON.parse(r); const init = initialRooms(); localStorage.setItem(STORAGE.ROOMS, JSON.stringify(init)); return init; }
+function saveRooms(r){ localStorage.setItem(STORAGE.ROOMS, JSON.stringify(r)); }
+function loadBookings(){ return JSON.parse(localStorage.getItem(STORAGE.BOOKINGS) || '[]'); }
+function saveBookings(b){ localStorage.setItem(STORAGE.BOOKINGS, JSON.stringify(b)); }
+
+/* -------------- App state -------------- */
+let rooms = loadRooms();
+let bookings = loadBookings();
+let matchedBooking = null;
+let selectedRoom = null;
+
+/* -------------- UI refs -------------- */
+const typeEl = document.getElementById('type');
+const priceBox = document.getElementById('priceBox');
+const bookingMessage = document.getElementById('bookingMessage');
+const availableCount = document.getElementById('availableCount');
+const roomsPreview = document.getElementById('roomsPreview');
+const btnPreviewRooms = document.getElementById('btnPreviewRooms');
+const adminLink = document.getElementById('adminLink');
+const adminPanel = document.getElementById('adminPanel');
+const btnCheckCode = document.getElementById('btnCheckCode');
+const accessCodeInput = document.getElementById('accessCodeInput');
+const codeMessage = document.getElementById('codeMessage');
+const roomSelectionArea = document.getElementById('roomSelectionArea');
+const roomsList = document.getElementById('roomsList');
+const btnChooseRoom = document.getElementById('btnChooseRoom');
+const btnCancelChoose = document.getElementById('btnCancelChoose');
+const finalMessage = document.getElementById('finalMessage');
+const proofEl = document.getElementById('proof');
+const bookingForm = document.getElementById('bookingForm');
+const formMessage = document.getElementById('form-message');
+
+/* -------------- Utilities -------------- */
+function formatGHS(n){ return '₵' + n.toLocaleString(); }
+function updateAvailableCount(){ availableCount.textContent = rooms.filter(r=>r.occupants < r.type).length; }
+function renderRoomsPreview(){ roomsPreview.innerHTML = ''; rooms.forEach(r=>{ const el = document.createElement('div'); el.className='room-pill' + (r.occupants>=r.type ? ' full' : ''); el.textContent = `#${r.number} (${r.type})`; roomsPreview.appendChild(el); }); }
+function saveAll(){ saveRooms(rooms); saveBookings(bookings); }
+
+/* generate access code: 2 uppercase letters + 4 digits */
+function generateAccessCode(){
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const L1 = letters[Math.floor(Math.random()*letters.length)];
+  const L2 = letters[Math.floor(Math.random()*letters.length)];
+  const N = Math.floor(1000 + Math.random()*9000);
+  return `${L1}${L2}${N}`;
+}
+
+/* convert file to dataURL */
+function fileToDataURL(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej('err'); fr.readAsDataURL(file); }); }
+
+/* escape */
+function esc(s=''){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* -------------- Formspree Integration -------------- */
+bookingForm.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const type = document.getElementById('type').value;
+  const checkin = document.getElementById('checkin').value;
+  const checkout = document.getElementById('Student ID').value;
+  const tx = document.getElementById('tx').value.trim();
+  const proofFile = proofEl.files[0];
+
+  if(!name || !email || !type || !tx || !proofFile){
+    formMessage.textContent = 'Please fill all required fields.';
+    formMessage.className = 'form-message error';
+    formMessage.style.display = 'block';
+    return;
+  }
+
+  // Show loading state
+  const submitBtn = document.getElementById('btnSubmitBooking');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Processing...';
+  
+  try {
+    // Convert proof to dataURL for local storage
+    const dataUrl = await fileToDataURL(proofFile);
+
+    // Save booking locally for admin management
+    const newBooking = {
+      id: Date.now(),
+      name, email, type:Number(type),
+      checkin, checkout, tx,
+      proofDataUrl: dataUrl,
+      status: 'pending', // pending -> approved -> booked
+      accessCode: null,
+      roomNumber: null,
+      created: new Date().toISOString()
+    };
+
+    bookings.push(newBooking);
+    saveBookings(bookings);
+
+    // Submit to Formspree
+    const formData = new FormData(bookingForm);
+    
+    const response = await fetch(bookingForm.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      formMessage.textContent = 'Thank you! Your booking request has been submitted successfully.';
+      formMessage.className = 'form-message success';
+      formMessage.style.display = 'block';
+      
+      // Reset form
+      bookingForm.reset();
+      priceBox.classList.add('hidden');
+      
+      // Update admin panel if open
+      if (!adminPanel.classList.contains('hidden')) {
+        renderAdminPanel();
+      }
+    } else {
+      const data = await response.json();
+      if (Object.hasOwn(data, 'errors')) {
+        formMessage.textContent = data.errors.map(error => error.message).join(', ');
+      } else {
+        formMessage.textContent = 'Oops! There was a problem submitting your form.';
+      }
+      formMessage.className = 'form-message error';
+      formMessage.style.display = 'block';
+    }
+  } catch (error) {
+    formMessage.textContent = 'Oops! There was a problem submitting your form.';
+    formMessage.className = 'form-message error';
+    formMessage.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Booking';
+  }
+});
+
+/* -------------- Room type selection -------------- */
+typeEl.addEventListener('change', ()=>{
+  const t = typeEl.value;
+  if(!t){ priceBox.classList.add('hidden'); return; }
+  const r = rooms.find(x=>String(x.type)===t);
+  priceBox.textContent = r ? `Price: ${formatGHS(r.price)}` : '';
+  priceBox.classList.remove('hidden');
+});
+
+/* reset */
+document.getElementById('btnResetBooking').addEventListener('click', ()=>{ 
+  bookingForm.reset(); 
+  priceBox.classList.add('hidden'); 
+  formMessage.style.display = 'none';
+});
+
+/* -------------- Admin login & panel -------------- */
+adminLink.addEventListener('click', (e)=>{ 
+  e.preventDefault(); 
+  const pass = prompt('Enter admin password:'); 
+  if(pass===ADMIN_PASSWORD){
+    adminPanel.classList.toggle('hidden'); 
+    if(!adminPanel.classList.contains('hidden')) renderAdminPanel(); 
+  } else {
+    alert('Wrong password.');
+  }
+});
+
+function renderAdminPanel(){
+  adminPanel.innerHTML = '';
+  const pending = bookings.filter(b=>b.status==='pending');
+  const approved = bookings.filter(b=>b.status==='approved' || b.status==='booked');
+
+  const pDiv = document.createElement('div');
+  pDiv.innerHTML = `<h4>Pending (${pending.length})</h4>`;
+  pending.forEach(b=>{
+    const box = document.createElement('div'); box.className='info'; box.style.marginTop='8px';
+    box.innerHTML = `<div><strong>${esc(b.name)}</strong> — Type: ${b.type} — TX: ${esc(b.tx)}</div>
+      <div style="margin-top:8px"><img src="${b.proofDataUrl}" class="proof" alt="proof"></div>
+      <div style="margin-top:8px">
+        <button onclick="approveBooking(${b.id})">Approve & Generate Code</button>
+        <button class="secondary" onclick="rejectBooking(${b.id})">Reject/Delete</button>
+      </div>`;
+    pDiv.appendChild(box);
+  });
+  adminPanel.appendChild(pDiv);
+
+  const aDiv = document.createElement('div'); aDiv.style.marginTop='12px';
+  aDiv.innerHTML = `<h4>Approved / Booked (${approved.length})</h4>`;
+  if(approved.length===0) aDiv.innerHTML += '<div class="small muted">No approved bookings yet.</div>';
+  approved.forEach(b=>{
+    const box = document.createElement('div'); box.className='info'; box.style.marginTop='8px';
+    box.innerHTML = `<div><strong>${esc(b.name)}</strong> — Type: ${b.type} — TX: ${esc(b.tx)}</div>
+      <div style="margin-top:6px">Access Code: <strong>${b.accessCode || '<not issued>'}</strong> — Room: ${b.roomNumber || '<not assigned>'}</div>
+      <div style="margin-top:8px">
+        <button class="secondary" onclick="emailCode(${b.id})">Email Code</button>
+        <button class="secondary" onclick="releaseBooking(${b.id})">Release & Delete</button>
+      </div>`;
+    aDiv.appendChild(box);
+  });
+  adminPanel.appendChild(aDiv);
+}
+
+/* Approve booking: generate unique code */
+window.approveBooking = function(id){
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return alert('Not found');
+  if(b.status !== 'pending') return alert('Already processed');
+  // unique code
+  let code;
+  do { code = generateAccessCode(); } while(bookings.some(x=>x.accessCode === code));
+  b.accessCode = code;
+  b.status = 'approved';
+  saveBookings(bookings);
+  alert('Access code generated: ' + code + '\nUse Email Code to send it to student.');
+  renderAdminPanel();
+};
+
+/* Email code: opens mailto: so admin can send via Gmail manually */
+window.emailCode = function(id){
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return;
+  if(!b.accessCode) return alert('No access code — approve first.');
+  const subject = encodeURIComponent('Your OCEAN VIEW Hostel access code');
+  const body = encodeURIComponent(`Hello ${b.name},\n\nYour booking has been approved. Use access code ${b.accessCode} on the booking site to choose a room.\n\nRoom type: ${b.type}\nTransaction ID: ${b.tx}\n\nRegards,\nOCEAN VIEW HOSTEL`);
+  // open default mail client (Gmail web will also work if user has it set)
+  window.location.href = `mailto:${b.email}?subject=${subject}&body=${body}`;
+};
+
+/* Reject booking (delete) */
+window.rejectBooking = function(id){
+  if(!confirm('Delete this booking?')) return;
+  bookings = bookings.filter(b=>b.id!==id);
+  saveBookings(bookings);
+  renderAdminPanel();
+};
+
+/* Release booking & free room */
+window.releaseBooking = function(id){
+  if(!confirm('Release booking and delete?')) return;
+  const b = bookings.find(x=>x.id===id);
+  if(b && b.roomNumber){
+    const room = rooms.find(r=>r.number===b.roomNumber);
+    if(room) { room.occupants = Math.max(0, room.occupants - 1); }
+  }
+  bookings = bookings.filter(x=>x.id!==id);
+  saveAll();
+  renderAdminPanel();
+  updateAvailableCount();
+  renderRoomsPreview();
+};
+
+/* -------------- Student uses access code to pick room -------------- */
+btnCheckCode.addEventListener('click', ()=>{
+  const code = (accessCodeInput.value || '').trim().toUpperCase();
+  if(!code){ codeMessage.textContent = 'Enter a code.'; codeMessage.classList.remove('hidden'); return; }
+  const b = bookings.find(x=>x.accessCode === code && x.status === 'approved');
+  if(!b){ codeMessage.textContent = 'Invalid or not approved code.'; codeMessage.classList.remove('hidden'); return; }
+  matchedBooking = b;
+  codeMessage.innerHTML = `<strong>Code ok for ${esc(b.name)} — room type ${b.type}.</strong>`;
+  codeMessage.classList.remove('hidden');
+  // show available rooms of that type
+  populateRoomSelection(b.type);
+  roomSelectionArea.classList.remove('hidden');
+  roomSelectionArea.scrollIntoView({behavior:'smooth'});
+});
+
+/* show available rooms for chosen type */
+function populateRoomSelection(type){
+  roomsList.innerHTML = '';
+  selectedRoom = null;
+  btnChooseRoom.disabled = true;
+  rooms.filter(r => r.type === type).forEach(r=>{
+    const pill = document.createElement('div');
+    pill.className = 'room-pill' + (r.occupants >= r.type ? ' full' : '');
+    pill.textContent = `#${r.number} (${r.occupants}/${r.type})`;
+    if(r.occupants < r.type){
+      pill.addEventListener('click', ()=> {
+        document.querySelectorAll('#roomsList .room-pill').forEach(el=>el.classList.remove('selected'));
+        pill.classList.add('selected');
+        selectedRoom = r.number;
+        btnChooseRoom.disabled = false;
+      });
+    }
+    roomsList.appendChild(pill);
+  });
+}
+
+/* finalize selection */
+btnChooseRoom.addEventListener('click', ()=>{
+  if(!matchedBooking || !selectedRoom) return alert('Pick a room.');
+  const room = rooms.find(r=>r.number === selectedRoom);
+  if(!room || room.occupants >= room.type) return alert('Room not available.');
+  // assign
+  room.occupants += 1;
+  matchedBooking.roomNumber = selectedRoom;
+  matchedBooking.status = 'booked';
+  saveAll();
+  finalMessage.classList.remove('hidden');
+  finalMessage.innerHTML = `<strong>Done!</strong><p class="small">Room #${selectedRoom} assigned to <strong>${esc(matchedBooking.name)}</strong>.</p>
+    <p class="small">Access code used: <strong>${matchedBooking.accessCode}</strong></p>`;
+  roomSelectionArea.classList.add('hidden');
+  matchedBooking = null;
+  accessCodeInput.value = '';
+  updateAvailableCount();
+  renderRoomsPreview();
+  renderAdminPanel();
+});
+
+/* cancel choosing */
+btnCancelChoose.addEventListener('click', ()=>{ roomSelectionArea.classList.add('hidden'); matchedBooking = null; accessCodeInput.value = ''; codeMessage.classList.add('hidden'); });
+
+/* preview rooms */
+btnPreviewRooms.addEventListener('click', ()=>{ renderRoomsPreview(); roomsPreview.scrollIntoView({behavior:'smooth'}); });
+
+/* -------------- Initial render -------------- */
+updateAvailableCount();
+renderRoomsPreview();
+</script>
+</body>
+</html>
