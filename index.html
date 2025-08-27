@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>OCEAN VIEW Hostel — Offline Booking (Admin)</title>
-  <link rel="icon" type="image/png" href="Logo.jpg">
+<link rel="icon" href="BACK.jpeg">
 <style>
   :root{--accent:#0066cc;--blue:#033a6b;--card-bg:#ffffffcc}
   body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f5f7fb;color:#062436}
@@ -89,7 +89,8 @@
           <li>Send MoMo to <strong>053 691 6900</strong> (School Hostel).</li>
           <li>Reference: <strong>Your Full Name + Room Type</strong>.</li>
           <li>Keep transaction ID & screenshot.</li>
-          <li>Submit booking form (attach screenshot).</li>
+          <li>Submit booking form below.</li>
+          <li>After submitting, <strong><a href="mailto:casiodavi9@gmail.com" style="color:#0066cc;text-decoration:underline">click here to email your payment screenshot</a></strong> to the admin.</li>
           <li>Wait for admin approval — admin will email your access code.</li>
         </ol>
       </div>
@@ -99,7 +100,7 @@
         <div id="bookingMessage" class="info hidden"></div>
         
         <!-- Formspree Form -->
-        <form id="bookingForm" action="https://formspree.io/f/xgvzqvbv" method="POST" enctype="multipart/form-data">
+        <form id="bookingForm" action="https://formspree.io/f/xgvzqvbv" method="POST">
           <label>Full name</label>
           <input type="text" name="name" id="name" placeholder="John Mensah" required>
 
@@ -121,13 +122,14 @@
           <input type="date" name="checkin" id="checkin">
 
           <label>Student ID</label>
-          <input type="digit" name="Student ID" id="Student ID">
+          <input type="text" name="student_id" id="student_id" placeholder="e.g., 12345678" required>
 
           <label>Transaction ID</label>
           <input type="text" name="transaction_id" id="tx" placeholder="e.g., MTN12345" required>
 
-          <label>Upload proof (screenshot)</label>
-          <input type="file" name="payment_proof" id="proof" accept="image/*" required>
+          <div class="small muted" style="margin-top:10px">
+            After submitting, <strong><a href="mailto:casiodavi9@gmail.com" style="color:#0066cc;text-decoration:underline">click here to email your payment screenshot</a></strong> to the admin.
+          </div>
 
           <div id="form-message" class="form-message"></div>
           
@@ -183,7 +185,7 @@
   <footer>
     CONTACT
     0536916900
-    casiodavi9@gmail.com
+    <a href="mailto:casiodavi9@gmail.com" style="color:#0066cc;text-decoration:underline">casiodavi9@gmail.com</a>
   </footer>
 </main>
 
@@ -251,7 +253,6 @@ const roomsList = document.getElementById('roomsList');
 const btnChooseRoom = document.getElementById('btnChooseRoom');
 const btnCancelChoose = document.getElementById('btnCancelChoose');
 const finalMessage = document.getElementById('finalMessage');
-const proofEl = document.getElementById('proof');
 const bookingForm = document.getElementById('bookingForm');
 const formMessage = document.getElementById('form-message');
 
@@ -270,9 +271,6 @@ function generateAccessCode(){
   return `${L1}${L2}${N}`;
 }
 
-/* convert file to dataURL */
-function fileToDataURL(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>rej('err'); fr.readAsDataURL(file); }); }
-
 /* escape */
 function esc(s=''){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -284,11 +282,10 @@ bookingForm.addEventListener('submit', async function(e) {
   const email = document.getElementById('email').value.trim();
   const type = document.getElementById('type').value;
   const checkin = document.getElementById('checkin').value;
-  const checkout = document.getElementById('Student ID').value;
+  const studentId = document.getElementById('student_id').value.trim();
   const tx = document.getElementById('tx').value.trim();
-  const proofFile = proofEl.files[0];
 
-  if(!name || !email || !type || !tx || !proofFile){
+  if(!name || !email || !type || !tx || !studentId){
     formMessage.textContent = 'Please fill all required fields.';
     formMessage.className = 'form-message error';
     formMessage.style.display = 'block';
@@ -301,15 +298,11 @@ bookingForm.addEventListener('submit', async function(e) {
   submitBtn.textContent = 'Processing...';
   
   try {
-    // Convert proof to dataURL for local storage
-    const dataUrl = await fileToDataURL(proofFile);
-
     // Save booking locally for admin management
     const newBooking = {
       id: Date.now(),
       name, email, type:Number(type),
-      checkin, checkout, tx,
-      proofDataUrl: dataUrl,
+      checkin, studentId, tx,
       status: 'pending', // pending -> approved -> booked
       accessCode: null,
       roomNumber: null,
@@ -331,7 +324,7 @@ bookingForm.addEventListener('submit', async function(e) {
     });
 
     if (response.ok) {
-      formMessage.textContent = 'Thank you! Your booking request has been submitted successfully.';
+      formMessage.textContent = 'Thank you! Your booking request has been submitted successfully. Now email your payment screenshot to casiodavi9@gmail.com.';
       formMessage.className = 'form-message success';
       formMessage.style.display = 'block';
       
@@ -401,7 +394,6 @@ function renderAdminPanel(){
   pending.forEach(b=>{
     const box = document.createElement('div'); box.className='info'; box.style.marginTop='8px';
     box.innerHTML = `<div><strong>${esc(b.name)}</strong> — Type: ${b.type} — TX: ${esc(b.tx)}</div>
-      <div style="margin-top:8px"><img src="${b.proofDataUrl}" class="proof" alt="proof"></div>
       <div style="margin-top:8px">
         <button onclick="approveBooking(${b.id})">Approve & Generate Code</button>
         <button class="secondary" onclick="rejectBooking(${b.id})">Reject/Delete</button>
@@ -448,7 +440,6 @@ window.emailCode = function(id){
   if(!b.accessCode) return alert('No access code — approve first.');
   const subject = encodeURIComponent('Your OCEAN VIEW Hostel access code');
   const body = encodeURIComponent(`Hello ${b.name},\n\nYour booking has been approved. Use access code ${b.accessCode} on the booking site to choose a room.\n\nRoom type: ${b.type}\nTransaction ID: ${b.tx}\n\nRegards,\nOCEAN VIEW HOSTEL`);
-  // open default mail client (Gmail web will also work if user has it set)
   window.location.href = `mailto:${b.email}?subject=${subject}&body=${body}`;
 };
 
